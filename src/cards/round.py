@@ -39,7 +39,7 @@ class Round:
     def deal(self):
         print(f"{self.dealer} will deal the deck this round.")
         for index in self.player_ordering:
-            self.players[index].cards = self.deck.top_n_cards(self.CARDS_TO_DEAL)
+            self.players[index].cards += self.deck.top_n_cards(self.CARDS_TO_DEAL)
 
     def player_passed(self, choice: str) -> bool:
         return choice in ('n', 'N')
@@ -111,3 +111,6 @@ class Round:
     def play_round(self):
         self.deal()
         self.bidding()
+        self.deal()
+        for player in self.players:
+            print(f"{player} - {player.cards}")
