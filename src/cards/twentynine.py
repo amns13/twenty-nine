@@ -1,4 +1,4 @@
-from card import Card, Suit, Deck
+from src.cards.card import Card, Suit, Deck
 
 
 class TwentyNineCard(Card):
@@ -10,13 +10,13 @@ class TwentyNineCard(Card):
     def __set_name(self, value: int) -> None:
         match value:
             case 1:
-                self._name = 'A'
+                self._name = "A"
             case 11:
-                self._name = 'J'
+                self._name = "J"
             case 12:
-                self._name = 'Q'
+                self._name = "Q"
             case 13:
-                self._name = 'K'
+                self._name = "K"
             case 7 | 8 | 9 | 10:
                 self._name = str(self.value)
             case _:

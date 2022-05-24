@@ -1,8 +1,8 @@
 from enum import Enum
 
-from card import Suit
-from players import Player
-from twentynine import TwentyNineCard, TwentyNineDeck
+from src.cards.card import Suit
+from src.cards.players import Player
+from src.cards.twentynine import TwentyNineCard, TwentyNineDeck
 
 PLAYERS = 4
 
@@ -16,11 +16,14 @@ class BidAction(Enum):
 class Round:
     CARDS_TO_DEAL = 4
     MIN_BID = 16
+
     def __init__(self, players: list[Player], dealer: int):
-        self.trump: int | Suit = None
+        self.trump: Suit | None = None
         self.players = players
         self.dealer = players[dealer]
         self.player_ordering = self._create_palyer_ordering()
+        self.highest_bidder: Player | None = None
+        self.highest_bid: int | None = None
         self._initialize_and_shuffle_deck()
 
     def _create_palyer_ordering(self):
@@ -28,7 +31,7 @@ class Round:
         return [(dealer_index + i + 1) % PLAYERS for i in range(PLAYERS)]
 
     def _initialize_and_shuffle_deck(self):
-        card_values = (1, 7, 8, 9, 10, 11 , 12, 13)
+        card_values = (1, 7, 8, 9, 10, 11, 12, 13)
         cards: list[TwentyNineCard] = []
         for suit in Suit:
             cards += [TwentyNineCard(suit, val) for val in card_values]
@@ -39,12 +42,16 @@ class Round:
     def deal(self):
         print(f"{self.dealer} will deal the deck this round.")
         for index in self.player_ordering:
-            self.players[index].cards += self.deck.top_n_cards(self.CARDS_TO_DEAL)
+            self.players[index].cards += self.deck.top_n_cards(
+                self.CARDS_TO_DEAL
+            )
 
     def player_passed(self, choice: str) -> bool:
-        return choice in ('n', 'N')
+        return choice in ("n", "N")
 
-    def _next_bidder(self, eligible_to_bid: list[int], last_bidder: int | None) -> int:
+    def _next_bidder(
+        self, eligible_to_bid: list[int], last_bidder: int | None
+    ) -> int:
         if eligible_to_bid:
             if last_bidder is None:
                 return eligible_to_bid[0]
@@ -56,21 +63,34 @@ class Round:
                     return eligible_to_bid[1]
         return -1
 
-
-    def bid(self, bidder: Player, *, action: BidAction,  cur_bid: int | None, min_bid: int, last_bidder: Player | None) -> str:
-        bid = ''
-        while bid not in {'y', 'n', 'Y', 'N'}:
-            print(f"Your cards: {bidder.cards}")
+    def bid(
+        self,
+        bidder: Player,
+        *,
+        action: BidAction,
+        cur_bid: int | None,
+        min_bid: int,
+        last_bidder: Player | None,
+    ) -> str:
+        bid = ""
+        while bid not in {"y", "n", "Y", "N"}:
+            print(f"{bidder}'s cards: {bidder.cards}")
             if not (cur_bid and last_bidder):
-                bid = input(f"{bidder}, Do you want to start bidding with {min_bid}? [Y/N]...")
+                bid = input(
+                    f"{bidder}, Do you want to start bidding with {min_bid}? [Y/N]..."
+                )
             elif action == BidAction.STAY:
-                bid = input(f"{bidder}, {last_bidder} has put a bid for {cur_bid}. Do you want to stay? [Y/N]...")
+                bid = input(
+                    f"{bidder}, {last_bidder} has put a bid for {cur_bid}. Do you want to stay? [Y/N]..."
+                )
             else:
-                bid = input(f"{bidder}, {last_bidder} has put a bid for {cur_bid}. Do you want to bid for {min_bid}? [Y/N]...")
+                bid = input(
+                    f"{bidder}, {last_bidder} has put a bid for {cur_bid}. Do you want to bid for {min_bid}? [Y/N]..."
+                )
 
         return bid
 
-    def bidding(self):
+    def bidding(self) -> bool:
         eligible_to_bid = self.player_ordering[:]
         active = eligible_to_bid[0]
         last_bidder = None
@@ -79,7 +99,13 @@ class Round:
         next_action = BidAction.BID
         last_bid_by = None if last_bidder is None else self.players[last_bidder]
         while True:
-            response = self.bid(self.players[active], min_bid=min_bid, action=next_action, cur_bid=current_bid, last_bidder=last_bid_by)
+            response = self.bid(
+                self.players[active],
+                min_bid=min_bid,
+                action=next_action,
+                cur_bid=current_bid,
+                last_bidder=last_bid_by,
+            )
             if self.player_passed(response):
                 eligible_to_bid.remove(active)
                 next_bidder = self._next_bidder(eligible_to_bid, last_bidder)
@@ -94,23 +120,53 @@ class Round:
                 min_bid += 1
                 next_bidder = self._next_bidder(eligible_to_bid, active)
                 last_bidder = active
-                last_bid_by = None if last_bidder is None else self.players[last_bidder]
+                last_bid_by = (
+                    None if last_bidder is None else self.players[last_bidder]
+                )
                 active = next_bidder
             else:  # STAY
                 next_action = BidAction.BID
                 next_bidder = self._next_bidder(eligible_to_bid, active)
                 last_bidder = active
-                last_bid_by = None if last_bidder is None else self.players[last_bidder]
+                last_bid_by = (
+                    None if last_bidder is None else self.players[last_bidder]
+                )
                 active = next_bidder
 
         if current_bid:
-            print(f"{self.players[last_bidder]} will set trump for {current_bid}")
+            print(
+                f"{self.players[last_bidder]} will set trump for {current_bid}"
+            )
+            self.highest_bid = current_bid
+            self.highest_bidder = self.players[last_bidder]
+            return True
         else:
             print("All players passed. No one will set trump.")
+            return False
+
+    def get_trump(self) -> Suit:
+        trump = 0
+        while not 1 <= trump <= 4:
+            try:
+                trump = int(
+                    input(
+                        f"""{self.highest_bidder}, please choose your trump color:
+                        [1: Spade, 2: Heart, 3: Club, 4: Diamond]...
+                        """
+                    )
+                )
+            except ValueError:
+                print("Please select an integer between 1 to 4.")
+        return list(Suit)[trump - 1]
 
     def play_round(self):
         self.deal()
-        self.bidding()
+        bid_successful = self.bidding()
+        if not bid_successful:
+            print("Trump not set in this round. Deal again.")
+            return
+        self.trump = self.get_trump()
         self.deal()
         for player in self.players:
             print(f"{player} - {player.cards}")
+        print(f"Trump: {self.trump.value}")

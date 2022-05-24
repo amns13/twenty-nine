@@ -1,9 +1,10 @@
-from players import Player
-from round import Round
+from src.cards.players import Player
+from src.cards.round import Round
+
 
 class Game:
     CARDS_TO_DEAL = 4
-    players = (Player('E'), Player('N'), Player('W'), Player('S'))
+    players = (Player("E"), Player("N"), Player("W"), Player("S"))
     scores = (0, 0)
 
     @classmethod

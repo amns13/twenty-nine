@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from twentynine import TwentyNineCard
+from src.cards.twentynine import TwentyNineCard
 
 
 class Player:
