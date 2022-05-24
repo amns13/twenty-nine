@@ -62,7 +62,7 @@ class TwentyNineCard(Card):
     def name(self):
         raise ValueError("You can not change name of this card.")
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return f"{self.suit.value}-{self.name}"
 
 

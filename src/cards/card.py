@@ -25,7 +25,7 @@ class Card(ABC):
     def value(self, value: int):
         pass
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return f"{self.suit.value}-{self.value}"
 
 
@@ -43,7 +43,7 @@ class Deck(ABC):
     def cards(self, cards: list[Card]):
         pass
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return ", ".join(map(str, self.cards))
 
     def shuffle(self) -> None:
