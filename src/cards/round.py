@@ -28,6 +28,8 @@ class Round:
     MIN_BID = 16
 
     def __init__(self, players: tuple[Player], dealer: int):
+        if not 0 <= dealer <= 3:
+            raise ValueError("dealer index should be in range [0, 4]")
         self.trump: Suit | None = None
         self.players = players
         self.dealer = players[dealer]
