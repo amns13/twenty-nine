@@ -1,3 +1,4 @@
+"""Contains logic for each game round in game."""
 from enum import Enum
 
 from src.cards.card import Suit
@@ -7,13 +8,22 @@ from src.cards.twentynine import TwentyNineCard, TwentyNineDeck
 PLAYERS = 4
 
 
+def player_passed(choice: str) -> bool:
+    """Check if the bidder passed."""
+    return choice in ("n", "N")
+
+
 class BidAction(Enum):
+    """Actions available for bidding"""
+
     BID = "Bid"
     PASS = "Pass"
     STAY = "Stay"
 
 
 class Round:
+    """Describes each round of the game."""
+
     CARDS_TO_DEAL = 4
     MIN_BID = 16
 
@@ -40,31 +50,27 @@ class Round:
         self.deck.shuffle()
 
     def deal(self):
+        """
+        Deal the card among the players. Starts from the next player
+        from the dealer and ends with the dealer.
+        """
         print(f"{self.dealer} will deal the deck this round.")
         for index in self.player_ordering:
-            self.players[index].cards += self.deck.top_n_cards(
-                self.CARDS_TO_DEAL
-            )
+            self.players[index].cards += self.deck.top_n_cards(self.CARDS_TO_DEAL)
 
-    def player_passed(self, choice: str) -> bool:
-        return choice in ("n", "N")
-
-    def _next_bidder(
-        self, eligible_to_bid: list[int], last_bidder: int | None
-    ) -> int:
+    @classmethod
+    def _next_bidder(cls, eligible_to_bid: list[int], last_bidder: int | None) -> int:
         if eligible_to_bid:
             if last_bidder is None:
                 return eligible_to_bid[0]
-            else:
-                last_bidder_index = eligible_to_bid.index(last_bidder)
-                if last_bidder_index > 0:
-                    return eligible_to_bid[0]
-                elif len(eligible_to_bid) > 1:
-                    return eligible_to_bid[1]
+            last_bidder_index = eligible_to_bid.index(last_bidder)
+            if last_bidder_index > 0:
+                return eligible_to_bid[0]
+            return eligible_to_bid[1]
         return -1
 
+    @staticmethod
     def bid(
-        self,
         bidder: Player,
         *,
         action: BidAction,
@@ -72,25 +78,44 @@ class Round:
         min_bid: int,
         last_bidder: Player | None,
     ) -> str:
-        bid = ""
-        while bid not in {"y", "n", "Y", "N"}:
+        """Takes bid action from player
+
+        Args:
+            bidder (Player): Bidder
+            action (BidAction): action available to the player along with pass
+            cur_bid (int | None): Current highest bid. None if no bid has been called yet
+            min_bid (int): Minimum possible bid
+            last_bidder (Player | None): Last bidder. None if no bid has been called yet
+
+        Returns:
+            str: bid action taken: Y/N
+        """
+        player_action = ""
+        while player_action not in {"y", "n", "Y", "N"}:
             print(f"{bidder}'s cards: {bidder.cards}")
             if not (cur_bid and last_bidder):
-                bid = input(
+                player_action = input(
                     f"{bidder}, Do you want to start bidding with {min_bid}? [Y/N]..."
                 )
             elif action == BidAction.STAY:
-                bid = input(
-                    f"{bidder}, {last_bidder} has put a bid for {cur_bid}. Do you want to stay? [Y/N]..."
+                player_action = input(
+                    f"{bidder}, {last_bidder} has put a bid for {cur_bid}. Do you want to stay?"
+                    " [Y/N]..."
                 )
             else:
-                bid = input(
-                    f"{bidder}, {last_bidder} has put a bid for {cur_bid}. Do you want to bid for {min_bid}? [Y/N]..."
+                player_action = input(
+                    f"{bidder}, {last_bidder} has put a bid for {cur_bid}. Do you want to bid for"
+                    f" {min_bid}? [Y/N]..."
                 )
 
-        return bid
+        return player_action
 
     def bidding(self) -> bool:
+        """Runs the bidding algorithm.
+
+        Returns:
+            bool: Whether a bid was placed successfully or not.
+        """
         eligible_to_bid = self.player_ordering[:]
         active = eligible_to_bid[0]
         last_bidder = None
@@ -106,7 +131,7 @@ class Round:
                 cur_bid=current_bid,
                 last_bidder=last_bid_by,
             )
-            if self.player_passed(response):
+            if player_passed(response):
                 eligible_to_bid.remove(active)
                 next_bidder = self._next_bidder(eligible_to_bid, last_bidder)
                 if next_bidder == -1:
@@ -120,31 +145,30 @@ class Round:
                 min_bid += 1
                 next_bidder = self._next_bidder(eligible_to_bid, active)
                 last_bidder = active
-                last_bid_by = (
-                    None if last_bidder is None else self.players[last_bidder]
-                )
+                last_bid_by = None if last_bidder is None else self.players[last_bidder]
                 active = next_bidder
             else:  # STAY
                 next_action = BidAction.BID
                 next_bidder = self._next_bidder(eligible_to_bid, active)
                 last_bidder = active
-                last_bid_by = (
-                    None if last_bidder is None else self.players[last_bidder]
-                )
+                last_bid_by = None if last_bidder is None else self.players[last_bidder]
                 active = next_bidder
 
         if current_bid:
-            print(
-                f"{self.players[last_bidder]} will set trump for {current_bid}"
-            )
+            print(f"{self.players[last_bidder]} will set trump for {current_bid}")
             self.highest_bid = current_bid
             self.highest_bidder = self.players[last_bidder]
             return True
-        else:
-            print("All players passed. No one will set trump.")
-            return False
+
+        print("All players passed. No one will set trump.")
+        return False
 
     def get_trump(self) -> Suit:
+        """Ask highest bidder to set the trump
+
+        Returns:
+            Suit: Suit selected as the trump.
+        """
         trump = 0
         while not 1 <= trump <= 4:
             try:
@@ -160,6 +184,7 @@ class Round:
         return list(Suit)[trump - 1]
 
     def play_round(self):
+        """Runs the gameplay for the round"""
         self.deal()
         bid_successful = self.bidding()
         if not bid_successful:

@@ -1,7 +1,11 @@
+"""Defines the card attributes specific to Twenty Nine."""
 from src.cards.card import Card, Suit, Deck
 
 
+# TODO: Convert this to a namedtuple.
 class TwentyNineCard(Card):
+    """A Twenty Nine card."""
+
     def __init__(self, suit: Suit, value: int):
         super().__init__(suit, value)
         self.__set_name(value)
@@ -48,6 +52,7 @@ class TwentyNineCard(Card):
 
     @property
     def score(self):
+        """Score of the card"""
         return self._score
 
     @score.setter
@@ -56,6 +61,7 @@ class TwentyNineCard(Card):
 
     @property
     def name(self):
+        """Name of the card"""
         return self._name
 
     @name.setter
@@ -67,6 +73,8 @@ class TwentyNineCard(Card):
 
 
 class TwentyNineDeck(Deck):
+    """A Twenty Nine Deck. Consists card from 7 to K and A."""
+
     def __init__(self, cards: list[TwentyNineCard]):
         super().__init__(cards)
 
@@ -82,6 +90,17 @@ class TwentyNineDeck(Deck):
         self._cards = cards
 
     def top_n_cards(self, n: int) -> list[TwentyNineCard]:
+        """Get top n cards from the deck.
+
+        Args:
+            n (int): Number of cards to return.
+
+        Raises:
+            TypeError: If n is not an int.
+
+        Returns:
+            list[TwentyNineCard]: List of the n cards from the top.
+        """
         if not isinstance(n, int):
-            raise ValueError("n should be an integer.")
+            raise TypeError("n should be an integer.")
         return [self.cards.pop() for _ in range(n)]
