@@ -27,20 +27,21 @@ class Round:
     CARDS_TO_DEAL = 4
     MIN_BID = 16
 
-    def __init__(self, players: list[Player], dealer: int):
+    def __init__(self, players: tuple[Player], dealer: int):
         self.trump: Suit | None = None
         self.players = players
         self.dealer = players[dealer]
         self.player_ordering = self._create_palyer_ordering()
         self.highest_bidder: Player | None = None
         self.highest_bid: int | None = None
+        self.deck = None
         self._initialize_and_shuffle_deck()
 
-    def _create_palyer_ordering(self):
+    def _create_palyer_ordering(self) -> list[int]:
         dealer_index = self.players.index(self.dealer)
         return [(dealer_index + i + 1) % PLAYERS for i in range(PLAYERS)]
 
-    def _initialize_and_shuffle_deck(self):
+    def _initialize_and_shuffle_deck(self) -> TwentyNineDeck:
         card_values = (1, 7, 8, 9, 10, 11, 12, 13)
         cards: list[TwentyNineCard] = []
         for suit in Suit:
