@@ -33,6 +33,9 @@ class Card(ABC):
     def __str__(self) -> str:
         return f"{self.suit.value}-{self.value}"
 
+    def __repr__(self) -> str:
+        return f"{self.suit.value}-{self.value}"
+
 
 class Deck(ABC):
     """Abstract base class defining a deck of cards."""
@@ -51,6 +54,9 @@ class Deck(ABC):
         pass
 
     def __str__(self) -> str:
+        return ", ".join(map(str, self.cards))
+
+    def __repr__(self) -> str:
         return ", ".join(map(str, self.cards))
 
     def shuffle(self) -> None:
