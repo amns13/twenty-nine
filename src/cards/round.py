@@ -36,21 +36,22 @@ class Round:
         self.player_ordering = self._create_palyer_ordering()
         self.highest_bidder: Player | None = None
         self.highest_bid: int | None = None
-        self.deck = None
-        self._initialize_and_shuffle_deck()
+        self.deck = self._initialize_and_shuffle_deck()
 
     def _create_palyer_ordering(self) -> list[int]:
         dealer_index = self.players.index(self.dealer)
         return [(dealer_index + i + 1) % PLAYERS for i in range(PLAYERS)]
 
-    def _initialize_and_shuffle_deck(self) -> TwentyNineDeck:
+    @staticmethod
+    def _initialize_and_shuffle_deck() -> TwentyNineDeck:
         card_values = (1, 7, 8, 9, 10, 11, 12, 13)
         cards: list[TwentyNineCard] = []
         for suit in Suit:
             cards += [TwentyNineCard(suit, val) for val in card_values]
 
-        self.deck = TwentyNineDeck(cards)
-        self.deck.shuffle()
+        deck = TwentyNineDeck(cards)
+        deck.shuffle()
+        return deck
 
     def deal(self):
         """
@@ -61,8 +62,17 @@ class Round:
         for index in self.player_ordering:
             self.players[index].cards += self.deck.top_n_cards(self.CARDS_TO_DEAL)
 
-    @classmethod
-    def _next_bidder(cls, eligible_to_bid: list[int], last_bidder: int | None) -> int:
+    @staticmethod
+    def next_bidder(eligible_to_bid: list[int], last_bidder: int | None) -> int:
+        """Returns the next bidder's index.
+
+        Args:
+            eligible_to_bid (list[int]): list of indices of bidders that have not passed
+            last_bidder (int | None): previous bidder's index. None if bidding yet to start
+
+        Returns:
+            int: Index of the next bidder. -1 if no eligible bidder remains.
+        """
         if eligible_to_bid:
             if last_bidder is None:
                 return eligible_to_bid[0]
@@ -136,7 +146,7 @@ class Round:
             )
             if player_passed(response):
                 eligible_to_bid.remove(active)
-                next_bidder = self._next_bidder(eligible_to_bid, last_bidder)
+                next_bidder = self.next_bidder(eligible_to_bid, last_bidder)
                 if next_bidder == -1:
                     break
                 active = next_bidder
@@ -146,13 +156,13 @@ class Round:
                 next_action = BidAction.STAY if current_bid else BidAction.BID
                 current_bid = min_bid
                 min_bid += 1
-                next_bidder = self._next_bidder(eligible_to_bid, active)
+                next_bidder = self.next_bidder(eligible_to_bid, active)
                 last_bidder = active
                 last_bid_by = None if last_bidder is None else self.players[last_bidder]
                 active = next_bidder
             else:  # STAY
                 next_action = BidAction.BID
-                next_bidder = self._next_bidder(eligible_to_bid, active)
+                next_bidder = self.next_bidder(eligible_to_bid, active)
                 last_bidder = active
                 last_bid_by = None if last_bidder is None else self.players[last_bidder]
                 active = next_bidder
